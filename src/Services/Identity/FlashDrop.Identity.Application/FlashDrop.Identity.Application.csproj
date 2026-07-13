@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Shared\FlashDrop.Shared.csproj" />
     <ProjectReference Include="..\FlashDrop.Identity.Domain\FlashDrop.Identity.Domain.csproj" />
   </ItemGroup>
 

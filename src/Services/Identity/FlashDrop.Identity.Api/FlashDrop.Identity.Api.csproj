@@ -27,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Shared\FlashDrop.Shared.csproj" />
     <ProjectReference Include="..\FlashDrop.Identity.Application\FlashDrop.Identity.Application.csproj" />
     <ProjectReference Include="..\FlashDrop.Identity.Infrastructure\FlashDrop.Identity.Infrastructure.csproj" />
   </ItemGroup>
