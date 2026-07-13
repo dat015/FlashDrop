@@ -1,0 +1,6 @@
+@FlashDrop.Catalog.Api_HostAddress = http://localhost:5072
+
+GET {{FlashDrop.Catalog.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,36 @@
+<Solution>
+  <Folder Name="/deploy/">
+    <File Path="deploy/docker-compose.infrastructure.yml" />
+    <File Path="init.sql" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="Shared/FlashDrop.Shared.csproj" Id="70f3fc16-30d5-4d3b-b9c7-772651191f87" />
+    <Project Path="src/BuildingBlocks/FlashDrop.Contracts/FlashDrop.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateways/">
+    <Project Path="src/Gateways/FlashDrop.ApiGateway/FlashDrop.ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Catalog/">
+    <Project Path="src/Services/Catalog/FlashDrop.Catalog.Api/FlashDrop.Catalog.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/FlashSale/">
+    <Project Path="src/Services/FlashSale/FlashDrop.FlashSale.Api/FlashDrop.FlashSale.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/FlashDrop.Identity.Api/FlashDrop.Identity.Api.csproj" />
+    <Project Path="src/Services/Identity/FlashDrop.Identity.Application/FlashDrop.Identity.Application.csproj" />
+    <Project Path="src/Services/Identity/FlashDrop.Identity.Domain/FlashDrop.Identity.Domain.csproj" />
+    <Project Path="src/Services/Identity/FlashDrop.Identity.Infrastructure/FlashDrop.Identity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Notification/">
+    <Project Path="src/Services/Notification/FlashDrop.Notification.Api/FlashDrop.Notification.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Order/">
+    <Project Path="src/Services/Order/FlashDrop.Order.Api/FlashDrop.Order.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Payment/">
+    <Project Path="src/Services/Payment/FlashDrop.Payment.Api/FlashDrop.Payment.Api.csproj" />
+  </Folder>
+</Solution>
