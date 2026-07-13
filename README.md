@@ -1,620 +1,619 @@
-# \# FlashDrop
+# FlashDrop
+
+FlashDrop is a high-concurrency Flash Sale platform built with **ASP.NET Core**, **Microservices Architecture**, and **Event-Driven Architecture**. The project focuses on solving real-world distributed system challenges such as overselling prevention, distributed transactions, fault tolerance, idempotency, and high-volume request processing.
+
+## Problem Statement
+
+Flash sale campaigns typically receive a massive number of purchase requests within a few seconds while only a limited amount of inventory is available.
+
+Example:
+
+| Item              |           Value |
+| ----------------- | --------------: |
+| Product           | Limited Sneaker |
+| Stock             |           1,000 |
+| Waiting Users     |          50,000 |
+| Incoming Requests |        100,000+ |
+
+The system must guarantee:
+
+- Sell exactly **1,000** products.
+- Prevent overselling.
+- Allow each customer to purchase only one item.
+- Prevent duplicate orders.
+- Ensure retry requests do not create duplicate orders.
+- Restore inventory when payment fails.
+- Prevent event loss during service failures.
+- Protect the system from abusive traffic through rate limiting.
 
-# 
+---
 
-# FlashDrop is a high-concurrency Flash Sale platform built with \*\*ASP.NET Core\*\*, \*\*Microservices Architecture\*\*, and \*\*Event-Driven Architecture\*\*. The project focuses on solving real-world distributed system challenges such as overselling prevention, distributed transactions, fault tolerance, idempotency, and high-volume request processing.
+# Architecture
 
-# 
+FlashDrop follows a **Microservices Architecture** combined with **Event-Driven Architecture**.
 
-# \## Problem Statement
+```
+                Client
+                   │
+             API Gateway
+                   │
+    ┌──────────────┼──────────────┐
+    │              │              │
+ Identity      Catalog      Flash Sale
+                                  │
+                           Waiting Room
+                           Redis Inventory
+                                  │
+                              RabbitMQ
+                                  │
+          ┌──────────────┬──────────────┐
+          │              │              │
+        Order        Payment     Notification
+```
 
-# 
+Each service owns its own database and communicates through REST APIs or asynchronous events.
 
-# Flash sale campaigns typically receive a massive number of purchase requests within a few seconds while only a limited amount of inventory is available.
+---
 
-# 
+# Core Features
 
-# Example:
+## Customer
 
-# 
+- Register and login
+- Browse products
+- View upcoming flash sale campaigns
+- Join the waiting room
+- Purchase flash sale products
+- Complete payment
+- Track order status
+- Receive real-time notifications
+- View purchase history
 
-# | Item              |           Value |
+## Seller
 
-# | ----------------- | --------------: |
+- Create and manage products
+- Create flash sale campaigns
+- Configure campaign inventory
+- Configure flash sale pricing
+- Set campaign schedule
+- Monitor sales
+- Track campaign revenue
 
-# | Product           | Limited Sneaker |
+## Administrator
 
-# | Stock             |           1,000 |
+- Manage users and sellers
+- Suspend accounts
+- Monitor campaigns
+- Monitor services
+- Monitor message queues
+- Monitor system health
+- View operational dashboard
 
-# | Waiting Users     |          50,000 |
+---
 
-# | Incoming Requests |        100,000+ |
+# Purchase Flow
 
-# 
+1. Seller creates a flash sale campaign.
+2. Customers join the waiting room.
+3. When the campaign starts, eligible customers receive temporary purchase permission.
+4. Flash Sale Service validates:
+   - Campaign status
+   - Purchase permission
+   - Purchase limit
+   - Inventory availability
 
-# The system must guarantee:
+5. Inventory is reserved atomically.
+6. An `OrderRequested` event is published.
+7. Order Service creates a pending order.
+8. Payment Service processes payment.
+9. Order Service confirms or cancels the order.
+10. Reserved inventory is restored automatically if payment fails.
 
-# 
+---
 
-# \* Sell exactly \*\*1,000\*\* products.
+# High-Concurrency Design
 
-# \* Prevent overselling.
+## Waiting Room
 
-# \* Allow each customer to purchase only one item.
+The waiting room controls how many customers are allowed to enter the purchasing flow simultaneously, reducing traffic spikes and improving fairness.
 
-# \* Prevent duplicate orders.
+## Atomic Inventory Management
 
-# \* Ensure retry requests do not create duplicate orders.
+Inventory is temporarily stored in Redis during active campaigns.
 
-# \* Restore inventory when payment fails.
+Atomic operations guarantee:
 
-# \* Prevent event loss during service failures.
+- No overselling
+- Low latency
+- High throughput
 
-# \* Protect the system from abusive traffic through rate limiting.
+## Rate Limiting
 
-# 
+Rate limiting protects the platform from:
 
-# \---
+- Bot attacks
+- API abuse
+- Excessive retries
 
-# 
+## Idempotency
 
-# \# Architecture
+Every purchase request contains a unique idempotency key.
 
-# 
+Repeated requests always return the same result instead of creating new orders.
 
-# FlashDrop follows a \*\*Microservices Architecture\*\* combined with \*\*Event-Driven Architecture\*\*.
+---
 
-# 
+# Distributed Transaction
 
-# ```
+FlashDrop uses the **Saga Pattern** to coordinate business transactions across multiple services.
 
-# &#x20;               Client
+```
+Reserve Inventory
+        │
+Create Order
+        │
+Process Payment
+        │
+ ┌───────────────┐
+ │ Success       │
+ │ Confirm Order │
+ └───────────────┘
 
-# &#x20;                  │
+or
 
-# &#x20;            API Gateway
+ ┌────────────────────────┐
+ │ Payment Failed         │
+ │ Cancel Order           │
+ │ Restore Inventory      │
+ └────────────────────────┘
+```
 
-# &#x20;                  │
+---
 
-# &#x20;   ┌──────────────┼──────────────┐
+# Event-Driven Workflow
 
-# &#x20;   │              │              │
+```
+ReserveInventorySucceeded
+            │
+            ▼
+     OrderRequested
+            │
+            ▼
+    PaymentRequested
+            │
+            ▼
+PaymentSucceeded / PaymentFailed
+            │
+            ▼
+OrderConfirmed / OrderCancelled
+```
 
-# &#x20;Identity      Catalog      Flash Sale
+Asynchronous communication reduces service coupling and improves scalability.
 
-# &#x20;                                 │
+---
 
-# &#x20;                          Waiting Room
+# Reliability
 
-# &#x20;                          Redis Inventory
+The platform incorporates several distributed system patterns:
 
-# &#x20;                                 │
+- Saga Pattern
+- Transactional Outbox Pattern
+- Idempotency
+- Retry Policy
+- Dead Letter Queue
+- Correlation ID
+- Distributed Tracing
 
-# &#x20;                             RabbitMQ
+These patterns ensure business consistency even when individual services fail.
 
-# &#x20;                                 │
+---
 
-# &#x20;         ┌──────────────┬──────────────┐
+# Observability
 
-# &#x20;         │              │              │
+The platform supports end-to-end monitoring through:
 
-# &#x20;       Order        Payment     Notification
+- Structured Logging
+- Distributed Tracing
+- Correlation IDs
+- Metrics Collection
 
-# ```
+Key metrics include:
 
-# 
+- Requests per second
+- Throughput
+- Average latency
+- P95 / P99 latency
+- Error rate
+- Queue length
+- Remaining inventory
+- Payment success rate
 
-# Each service owns its own database and communicates through REST APIs or asynchronous events.
+---
 
-# 
+# Performance Goals
 
-# \---
+| Metric            |   Target |
+| ----------------- | -------: |
+| Stock             |    1,000 |
+| Waiting Users     |   50,000 |
+| Purchase Requests | 100,000+ |
+| Successful Orders |    1,000 |
+| Overselling       |        0 |
+| Duplicate Orders  |        0 |
+| Lost Events       |        0 |
 
-# 
+---
 
-# \# Core Features
+# Technology Stack
 
-# 
+## Backend
 
-# \## Customer
+- ASP.NET Core
+- C#
+- Entity Framework Core
+- PostgreSQL
 
-# 
+## Architecture
 
-# \* Register and login
+- Microservices
+- Clean Architecture
+- Vertical Slice Architecture
+- CQRS
+- Event-Driven Architecture
 
-# \* Browse products
+## Infrastructure
 
-# \* View upcoming flash sale campaigns
+- Docker
+- Redis
+- RabbitMQ
+- YARP API Gateway
 
-# \* Join the waiting room
+## Security
 
-# \* Purchase flash sale products
+- JWT Authentication
+- Role-Based Authorization
+- Rate Limiting
 
-# \* Complete payment
+## Reliability
 
-# \* Track order status
+- Saga Pattern
+- Transactional Outbox Pattern
+- Idempotency
 
-# \* Receive real-time notifications
+## Monitoring
 
-# \* View purchase history
+- Structured Logging
+- Correlation IDs
+- Distributed Tracing
+- Metrics
 
-# 
+---
 
-# \## Seller
+# Project Status
 
-# 
+The project is currently under active development.
 
-# \* Create and manage products
+Planned improvements include:
 
-# \* Create flash sale campaigns
+- Kubernetes deployment
+- OpenTelemetry integration
+- Prometheus & Grafana dashboards
+- CI/CD pipeline
+- Load testing with K6
+- Payment gateway integration
 
-# \* Configure campaign inventory
+---
 
-# \* Configure flash sale pricing
+# License
 
-# \* Set campaign schedule
+This project is intended for educational and research purposes.
 
-# \* Monitor sales
+# FlashDrop
 
-# \* Track campaign revenue
+FlashDrop is a high-concurrency Flash Sale platform built with **ASP.NET Core**, **Microservices Architecture**, and **Event-Driven Architecture**. The project focuses on solving real-world distributed system challenges such as overselling prevention, distributed transactions, fault tolerance, idempotency, and high-volume request processing.
 
-# 
+## Problem Statement
 
-# \## Administrator
+Flash sale campaigns typically receive a massive number of purchase requests within a few seconds while only a limited amount of inventory is available.
 
-# 
+Example:
 
-# \* Manage users and sellers
+| Item              |           Value |
+| ----------------- | --------------: |
+| Product           | Limited Sneaker |
+| Stock             |           1,000 |
+| Waiting Users     |          50,000 |
+| Incoming Requests |        100,000+ |
 
-# \* Suspend accounts
+The system must guarantee:
 
-# \* Monitor campaigns
+- Sell exactly **1,000** products.
+- Prevent overselling.
+- Allow each customer to purchase only one item.
+- Prevent duplicate orders.
+- Ensure retry requests do not create duplicate orders.
+- Restore inventory when payment fails.
+- Prevent event loss during service failures.
+- Protect the system from abusive traffic through rate limiting.
 
-# \* Monitor services
+---
 
-# \* Monitor message queues
+# Architecture
 
-# \* Monitor system health
+FlashDrop follows a **Microservices Architecture** combined with **Event-Driven Architecture**.
 
-# \* View operational dashboard
+```
+                Client
+                   │
+             API Gateway
+                   │
+    ┌──────────────┼──────────────┐
+    │              │              │
+ Identity      Catalog      Flash Sale
+                                  │
+                           Waiting Room
+                           Redis Inventory
+                                  │
+                              RabbitMQ
+                                  │
+          ┌──────────────┬──────────────┐
+          │              │              │
+        Order        Payment     Notification
+```
 
-# 
+Each service owns its own database and communicates through REST APIs or asynchronous events.
 
-# \---
+---
 
-# 
+# Core Features
 
-# \# Purchase Flow
+## Customer
 
-# 
+- Register and login
+- Browse products
+- View upcoming flash sale campaigns
+- Join the waiting room
+- Purchase flash sale products
+- Complete payment
+- Track order status
+- Receive real-time notifications
+- View purchase history
 
-# 1\. Seller creates a flash sale campaign.
+## Seller
 
-# 2\. Customers join the waiting room.
+- Create and manage products
+- Create flash sale campaigns
+- Configure campaign inventory
+- Configure flash sale pricing
+- Set campaign schedule
+- Monitor sales
+- Track campaign revenue
 
-# 3\. When the campaign starts, eligible customers receive temporary purchase permission.
+## Administrator
 
-# 4\. Flash Sale Service validates:
+- Manage users and sellers
+- Suspend accounts
+- Monitor campaigns
+- Monitor services
+- Monitor message queues
+- Monitor system health
+- View operational dashboard
 
-# 
+---
 
-# &#x20;  \* Campaign status
+# Purchase Flow
 
-# &#x20;  \* Purchase permission
+1. Seller creates a flash sale campaign.
+2. Customers join the waiting room.
+3. When the campaign starts, eligible customers receive temporary purchase permission.
+4. Flash Sale Service validates:
+   - Campaign status
+   - Purchase permission
+   - Purchase limit
+   - Inventory availability
 
-# &#x20;  \* Purchase limit
+5. Inventory is reserved atomically.
+6. An `OrderRequested` event is published.
+7. Order Service creates a pending order.
+8. Payment Service processes payment.
+9. Order Service confirms or cancels the order.
+10. Reserved inventory is restored automatically if payment fails.
 
-# &#x20;  \* Inventory availability
+---
 
-# 5\. Inventory is reserved atomically.
+# High-Concurrency Design
 
-# 6\. An `OrderRequested` event is published.
+## Waiting Room
 
-# 7\. Order Service creates a pending order.
+The waiting room controls how many customers are allowed to enter the purchasing flow simultaneously, reducing traffic spikes and improving fairness.
 
-# 8\. Payment Service processes payment.
+## Atomic Inventory Management
 
-# 9\. Order Service confirms or cancels the order.
+Inventory is temporarily stored in Redis during active campaigns.
 
-# 10\. Reserved inventory is restored automatically if payment fails.
+Atomic operations guarantee:
 
-# 
+- No overselling
+- Low latency
+- High throughput
 
-# \---
+## Rate Limiting
 
-# 
+Rate limiting protects the platform from:
 
-# \# High-Concurrency Design
+- Bot attacks
+- API abuse
+- Excessive retries
 
-# 
+## Idempotency
 
-# \## Waiting Room
+Every purchase request contains a unique idempotency key.
 
-# 
+Repeated requests always return the same result instead of creating new orders.
 
-# The waiting room controls how many customers are allowed to enter the purchasing flow simultaneously, reducing traffic spikes and improving fairness.
+---
 
-# 
+# Distributed Transaction
 
-# \## Atomic Inventory Management
+FlashDrop uses the **Saga Pattern** to coordinate business transactions across multiple services.
 
-# 
+```
+Reserve Inventory
+        │
+Create Order
+        │
+Process Payment
+        │
+ ┌───────────────┐
+ │ Success       │
+ │ Confirm Order │
+ └───────────────┘
 
-# Inventory is temporarily stored in Redis during active campaigns.
+or
 
-# 
+ ┌────────────────────────┐
+ │ Payment Failed         │
+ │ Cancel Order           │
+ │ Restore Inventory      │
+ └────────────────────────┘
+```
 
-# Atomic operations guarantee:
+---
 
-# 
+# Event-Driven Workflow
 
-# \* No overselling
+```
+ReserveInventorySucceeded
+            │
+            ▼
+     OrderRequested
+            │
+            ▼
+    PaymentRequested
+            │
+            ▼
+PaymentSucceeded / PaymentFailed
+            │
+            ▼
+OrderConfirmed / OrderCancelled
+```
 
-# \* Low latency
+Asynchronous communication reduces service coupling and improves scalability.
 
-# \* High throughput
+---
 
-# 
+# Reliability
 
-# \## Rate Limiting
+The platform incorporates several distributed system patterns:
 
-# 
+- Saga Pattern
+- Transactional Outbox Pattern
+- Idempotency
+- Retry Policy
+- Dead Letter Queue
+- Correlation ID
+- Distributed Tracing
 
-# Rate limiting protects the platform from:
+These patterns ensure business consistency even when individual services fail.
 
-# 
+---
 
-# \* Bot attacks
+# Observability
 
-# \* API abuse
+The platform supports end-to-end monitoring through:
 
-# \* Excessive retries
+- Structured Logging
+- Distributed Tracing
+- Correlation IDs
+- Metrics Collection
 
-# 
+Key metrics include:
 
-# \## Idempotency
+- Requests per second
+- Throughput
+- Average latency
+- P95 / P99 latency
+- Error rate
+- Queue length
+- Remaining inventory
+- Payment success rate
 
-# 
+---
 
-# Every purchase request contains a unique idempotency key.
+# Performance Goals
 
-# 
+| Metric            |   Target |
+| ----------------- | -------: |
+| Stock             |    1,000 |
+| Waiting Users     |   50,000 |
+| Purchase Requests | 100,000+ |
+| Successful Orders |    1,000 |
+| Overselling       |        0 |
+| Duplicate Orders  |        0 |
+| Lost Events       |        0 |
 
-# Repeated requests always return the same result instead of creating new orders.
+---
 
-# 
+# Technology Stack
 
-# \---
+## Backend
 
-# 
+- ASP.NET Core
+- C#
+- Entity Framework Core
+- PostgreSQL
 
-# \# Distributed Transaction
+## Architecture
 
-# 
+- Microservices
+- Clean Architecture
+- Vertical Slice Architecture
+- CQRS
+- Event-Driven Architecture
 
-# FlashDrop uses the \*\*Saga Pattern\*\* to coordinate business transactions across multiple services.
+## Infrastructure
 
-# 
+- Docker
+- Redis
+- RabbitMQ
+- YARP API Gateway
 
-# ```
+## Security
 
-# Reserve Inventory
+- JWT Authentication
+- Role-Based Authorization
+- Rate Limiting
 
-# &#x20;       │
+## Reliability
 
-# Create Order
+- Saga Pattern
+- Transactional Outbox Pattern
+- Idempotency
 
-# &#x20;       │
+## Monitoring
 
-# Process Payment
+- Structured Logging
+- Correlation IDs
+- Distributed Tracing
+- Metrics
 
-# &#x20;       │
+---
 
-# &#x20;┌───────────────┐
+# Project Status
 
-# &#x20;│ Success       │
+The project is currently under active development.
 
-# &#x20;│ Confirm Order │
+Planned improvements include:
 
-# &#x20;└───────────────┘
+- Kubernetes deployment
+- OpenTelemetry integration
+- Prometheus & Grafana dashboards
+- CI/CD pipeline
+- Load testing with K6
+- Payment gateway integration
 
-# 
+---
 
-# or
+# License
 
-# 
-
-# &#x20;┌────────────────────────┐
-
-# &#x20;│ Payment Failed         │
-
-# &#x20;│ Cancel Order           │
-
-# &#x20;│ Restore Inventory      │
-
-# &#x20;└────────────────────────┘
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# Event-Driven Workflow
-
-# 
-
-# ```
-
-# ReserveInventorySucceeded
-
-# &#x20;           │
-
-# &#x20;           ▼
-
-# &#x20;    OrderRequested
-
-# &#x20;           │
-
-# &#x20;           ▼
-
-# &#x20;   PaymentRequested
-
-# &#x20;           │
-
-# &#x20;           ▼
-
-# PaymentSucceeded / PaymentFailed
-
-# &#x20;           │
-
-# &#x20;           ▼
-
-# OrderConfirmed / OrderCancelled
-
-# ```
-
-# 
-
-# Asynchronous communication reduces service coupling and improves scalability.
-
-# 
-
-# \---
-
-# 
-
-# \# Reliability
-
-# 
-
-# The platform incorporates several distributed system patterns:
-
-# 
-
-# \* Saga Pattern
-
-# \* Transactional Outbox Pattern
-
-# \* Idempotency
-
-# \* Retry Policy
-
-# \* Dead Letter Queue
-
-# \* Correlation ID
-
-# \* Distributed Tracing
-
-# 
-
-# These patterns ensure business consistency even when individual services fail.
-
-# 
-
-# \---
-
-# 
-
-# \# Observability
-
-# 
-
-# The platform supports end-to-end monitoring through:
-
-# 
-
-# \* Structured Logging
-
-# \* Distributed Tracing
-
-# \* Correlation IDs
-
-# \* Metrics Collection
-
-# 
-
-# Key metrics include:
-
-# 
-
-# \* Requests per second
-
-# \* Throughput
-
-# \* Average latency
-
-# \* P95 / P99 latency
-
-# \* Error rate
-
-# \* Queue length
-
-# \* Remaining inventory
-
-# \* Payment success rate
-
-# 
-
-# \---
-
-# 
-
-# \# Performance Goals
-
-# 
-
-# | Metric            |   Target |
-
-# | ----------------- | -------: |
-
-# | Stock             |    1,000 |
-
-# | Waiting Users     |   50,000 |
-
-# | Purchase Requests | 100,000+ |
-
-# | Successful Orders |    1,000 |
-
-# | Overselling       |        0 |
-
-# | Duplicate Orders  |        0 |
-
-# | Lost Events       |        0 |
-
-# 
-
-# \---
-
-# 
-
-# \# Technology Stack
-
-# 
-
-# \## Backend
-
-# 
-
-# \* ASP.NET Core
-
-# \* C#
-
-# \* Entity Framework Core
-
-# \* PostgreSQL
-
-# 
-
-# \## Architecture
-
-# 
-
-# \* Microservices
-
-# \* Clean Architecture
-
-# \* Vertical Slice Architecture
-
-# \* CQRS
-
-# \* Event-Driven Architecture
-
-# 
-
-# \## Infrastructure
-
-# 
-
-# \* Docker
-
-# \* Redis
-
-# \* RabbitMQ
-
-# \* YARP API Gateway
-
-# 
-
-# \## Security
-
-# 
-
-# \* JWT Authentication
-
-# \* Role-Based Authorization
-
-# \* Rate Limiting
-
-# 
-
-# \## Reliability
-
-# 
-
-# \* Saga Pattern
-
-# \* Transactional Outbox Pattern
-
-# \* Idempotency
-
-# 
-
-# \## Monitoring
-
-# 
-
-# \* Structured Logging
-
-# \* Correlation IDs
-
-# \* Distributed Tracing
-
-# \* Metrics
-
-# 
-
-# \---
-
-# 
-
-# \# Project Status
-
-# 
-
-# The project is currently under active development.
-
-# 
-
-# Planned improvements include:
-
-# 
-
-# \* Kubernetes deployment
-
-# \* OpenTelemetry integration
-
-# \* Prometheus \& Grafana dashboards
-
-# \* CI/CD pipeline
-
-# \* Load testing with K6
-
-# \* Payment gateway integration
-
-# 
-
-# \---
-
-# 
-
-# \# License
-
-# 
-
-# This project is intended for educational and research purposes.
-
-
-
+This project is intended for educational and research purposes.
