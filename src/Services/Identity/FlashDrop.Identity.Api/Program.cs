@@ -1,13 +1,12 @@
 using FlashDrop.Identity.Application.Features.Register;
 using FlashDrop.Services.Identity.Infrastructure;
-using FlashDrop.Shared.Attributes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using Shared.Extensions;
 using System.Text;
 using System.Threading.RateLimiting;
-
+using Shared.Extensions;
+using FlashDrop.Shared.Attributes;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

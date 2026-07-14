@@ -5,8 +5,8 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
-    <Project Path="Shared/FlashDrop.Shared.csproj" />
     <Project Path="src/BuildingBlocks/FlashDrop.Contracts/FlashDrop.Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/Shared/FlashDrop.Shared.csproj" />
   </Folder>
   <Folder Name="/src/Gateways/">
     <Project Path="src/Gateways/FlashDrop.ApiGateway/FlashDrop.ApiGateway.csproj" />
