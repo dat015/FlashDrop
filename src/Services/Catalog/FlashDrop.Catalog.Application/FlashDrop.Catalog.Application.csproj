@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\Authentication\" />
+    <Folder Include="Abstractions\Messaging\" />
+    <Folder Include="Abstractions\Services\" />
+    <Folder Include="Features\Categories\CreateCategory\" />
+    <Folder Include="Features\Categories\DeleteCategory\" />
+    <Folder Include="Features\Categories\GetCategory\" />
+    <Folder Include="Features\Categories\GetCategories\" />
+    <Folder Include="Features\Categories\UpdateCategory\" />
+    <Folder Include="Features\Inventory\IncreaseStock\" />
+    <Folder Include="Features\Inventory\DecreaseStock\" />
+    <Folder Include="Features\Inventory\GetInventory\" />
+    <Folder Include="Features\Inventory\AdjustStock\" />
+    <Folder Include="Features\ProductImages\AddImage\" />
+    <Folder Include="Features\ProductImages\ChangePrimaryImage\" />
+    <Folder Include="Features\ProductImages\ReorderImages\" />
+    <Folder Include="Features\ProductImages\RemoveImage\" />
+    <Folder Include="Features\ProductSpecifications\AddSpecification\" />
+    <Folder Include="Features\ProductSpecifications\RemoveSpecification\" />
+    <Folder Include="Features\ProductSpecifications\UpdateSpecification\" />
+    <Folder Include="Features\Products\DeleteProduct\" />
+    <Folder Include="Features\Products\HideProduct\" />
+    <Folder Include="Features\Products\ArchiveProduct\" />
+    <Folder Include="Features\Products\GetProduct\" />
+    <Folder Include="Features\Products\GetProducts\" />
+    <Folder Include="Features\Products\SearchProducts\" />
+    <Folder Include="Features\Products\PublishProduct\" />
+    <Folder Include="Features\Products\UpdateProduct\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared\FlashDrop.Shared.csproj" />
+    <ProjectReference Include="..\FlashDrop.Catalog.Domain\FlashDrop.Catalog.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

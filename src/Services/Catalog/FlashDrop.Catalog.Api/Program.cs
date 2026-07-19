@@ -1,41 +1,83 @@
+using FlashDrop.Catalog.Infrastructure;
+using FlashDrop.Shared.Attributes;
+using Shared.Extensions;
+using System.Threading.RateLimiting;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter =
+        PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            var endpoint = context.GetEndpoint();
 
+            var metadata = endpoint?
+                .Metadata
+                .GetMetadata<RateLimitAttribute>();
+
+            var permit = metadata?.PermitLimit ?? 100;
+
+            var window = metadata?.Window ?? TimeSpan.FromMinutes(1);
+
+            var key =
+                context.User.FindFirst("sub")?.Value ??
+                context.Connection.RemoteIpAddress?.ToString() ??
+                "anonymous";
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                key,
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permit,
+                    Window = window,
+                    QueueLimit = 0
+                });
+        });
+});
+builder.Services.AddAuthorization();
+//builder.Services.AddMediatR(cfg =>
+//{
+//    cfg.RegisterServicesFromAssembly(
+//        typeof(GetProductsHandler).Assembly);
+//});
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapSwaggerUI();
 }
+app.UseCorrelationId();
 
+app.UseRequestLogging();
+
+app.UseSecurityHeaders();
+
+app.UseRateLimiter();
+
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.UseGlobalExceptionMiddleware();
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseResponseCompression();
+// Controller
+app.MapControllers();
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -14,6 +14,9 @@
   <Folder Name="/src/Services/" />
   <Folder Name="/src/Services/Catalog/">
     <Project Path="src/Services/Catalog/FlashDrop.Catalog.Api/FlashDrop.Catalog.Api.csproj" />
+    <Project Path="src/Services/Catalog/FlashDrop.Catalog.Application/FlashDrop.Catalog.Application.csproj" Id="4ae37cbe-2625-42a0-aa23-6ac74226df0c" />
+    <Project Path="src/Services/Catalog/FlashDrop.Catalog.Domain/FlashDrop.Catalog.Domain.csproj" Id="9f739402-6744-41da-90aa-25d64075e069" />
+    <Project Path="src/Services/Catalog/FlashDrop.Catalog.Infrastructure/FlashDrop.Catalog.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Services/FlashSale/">
     <Project Path="src/Services/FlashSale/FlashDrop.FlashSale.Api/FlashDrop.FlashSale.Api.csproj" />
