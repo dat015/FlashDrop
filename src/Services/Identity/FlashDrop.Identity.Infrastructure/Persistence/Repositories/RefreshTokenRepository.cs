@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using FlashDrop.Identity.Application.Abstractions.Persistence;
@@ -32,6 +32,12 @@ namespace FlashDrop.Identity.Infrastructure.Persistence.Repositories
         public async Task Update(RefreshToken refreshToken, CancellationToken cancellationToken)
         {
             _context.RefreshTokens.Update(refreshToken);
+        }
+
+        public async Task DeleteAllByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            var tokens = await _context.RefreshTokens.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
+            _context.RefreshTokens.RemoveRange(tokens);
         }
     }
 }

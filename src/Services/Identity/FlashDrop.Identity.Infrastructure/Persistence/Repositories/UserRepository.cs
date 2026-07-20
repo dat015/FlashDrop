@@ -1,4 +1,4 @@
-﻿using FlashDrop.Identity.Application.Abstractions.Persistence;
+using FlashDrop.Identity.Application.Abstractions.Persistence;
 using FlashDrop.Identity.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,9 +29,24 @@ namespace FlashDrop.Identity.Infrastructure.Persistence.Repositories
             return await _context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
         }
 
+        public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            return await _context.Users.ToListAsync(cancellationToken);
+        }
+
         public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _context.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        }
+
+        public void Update(User user)
+        {
+            _context.Users.Update(user);
+        }
+
+        public void Delete(User user)
+        {
+            _context.Users.Remove(user);
         }
 
         public async Task SaveChangesAsync(CancellationToken cancellationToken)

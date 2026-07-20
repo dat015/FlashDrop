@@ -21,6 +21,8 @@ namespace FlashDrop.Catalog.Infrastructure
             services.AddScoped<FlashDrop.Catalog.Application.Abstractions.Persistence.IInventoryRepository, FlashDrop.Catalog.Domain.Persistence.Repositories.InventoryRepository>();
             services.AddScoped<FlashDrop.Catalog.Application.Abstractions.Persistence.IProductImageRepository, FlashDrop.Catalog.Domain.Persistence.Repositories.ProductImageRepository>();
             services.AddScoped<FlashDrop.Catalog.Application.Abstractions.Persistence.IProductSpecRepository, FlashDrop.Catalog.Domain.Persistence.Repositories.ProductSpecRepository>();
+            services.Configure<FlashDrop.Catalog.Infrastructure.Services.Storage.CloudinaryOptions>(configuration.GetSection("Cloudinary"));
+            services.AddScoped<FlashDrop.Catalog.Application.Abstractions.Services.IImageService, FlashDrop.Catalog.Infrastructure.Services.Storage.CloudinaryImageService>();
 
             return services;
         }

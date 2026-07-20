@@ -7,7 +7,9 @@ namespace FlashDrop.Catalog.Application.Features.ProductImages.AddImage
         public AddImageValidator()
         {
             RuleFor(x => x.ProductId).NotEmpty();
-            RuleFor(x => x.ImageUrl).NotEmpty().MaximumLength(500);
+            RuleFor(x => x.File).NotNull();
+            RuleFor(x => x.File.FileName).NotEmpty().When(x => x.File != null);
+            RuleFor(x => x.File.Content).NotNull().When(x => x.File != null);
             RuleFor(x => x.DisplayOrder).GreaterThanOrEqualTo(0);
         }
     }

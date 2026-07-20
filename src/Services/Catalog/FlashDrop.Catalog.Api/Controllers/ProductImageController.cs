@@ -1,3 +1,4 @@
+using FlashDrop.Catalog.Application.Features.ProductImages.AddImage;
 using FlashDrop.Shared.Controller;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,9 +20,22 @@ namespace FlashDrop.Catalog.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(Guid productId, [FromBody] Application.Features.ProductImages.AddImage.AddImageCommand command)
+        public async Task<IActionResult> Add(Guid productId, [FromForm] Microsoft.AspNetCore.Http.IFormFile file, [FromForm] bool isPrimary, [FromForm] int displayOrder)
         {
-            if (productId != command.ProductId) return BadRequest();
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("File is empty or missing.");
+            }
+
+            using var stream = file.OpenReadStream();
+            var fileDto = new Application.DTOs.FileDto(stream, file.FileName, file.ContentType);
+
+            var command = new Application.Features.ProductImages.AddImage.AddImageCommand(
+                productId,
+                fileDto,
+                isPrimary,
+                displayOrder);
+
             var result = await _mediator.Send(command);
             return CreatedResponse(result, "Product image added successfully.");
         }
